@@ -10,5 +10,5 @@ type DBClient interface {
 	Ping(ctx context.Context) error
 	FindExpiredDelegations(
 		ctx context.Context, btcTipHeight uint64,
-	) (*model.StakingExpiryHeightDocument, error)
+	) ([]model.StakingExpiryHeightDocument, error)
 }

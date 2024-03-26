@@ -10,8 +10,7 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/cmd/staking-expiry-checker/cli"
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
-	"github.com/babylonchain/staking-expiry-checker/internal/queue"
-	"github.com/babylonchain/staking-expiry-checker/internal/services"
+	"github.com/babylonchain/staking-expiry-checker/internal/poller"
 )
 
 func init() {
@@ -39,11 +38,10 @@ func main() {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	services, err := services.New(ctx, cfg)
+	// Start the staking poller
+	p, err := poller.NewPoller(ctx, cfg)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error while setting up staking services layer")
+		log.Fatal().Err(err).Msg("error while setting up staking poller")
 	}
-	// Start the event queue processing
-	queues := queue.New(cfg.Queue, services)
-	queues.StartReceivingMessages()
+	p.Start(ctx)
 }

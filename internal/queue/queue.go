@@ -2,80 +2,49 @@ package queue
 
 import (
 	"context"
-	"time"
+	"encoding/json"
+	"fmt"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue/client"
-	"github.com/babylonchain/staking-expiry-checker/internal/queue/handlers"
-	"github.com/babylonchain/staking-expiry-checker/internal/services"
 )
 
-type MessageHandler func(ctx context.Context, messageBody string) error
-
-type Queues struct {
-	ActiveStakingQueueClient client.QueueClient
-	Handlers                 *handlers.QueueHandler
-	processingTimeout        time.Duration
+type Queue struct {
+	stakingExpiredEventQueue client.QueueClient
 }
 
-func New(cfg config.QueueConfig, service *services.Services) *Queues {
-	activeStakingQueueClient, err := client.NewQueueClient(
-		cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ActiveStakingQueueName,
-	)
+func NewQueue(cfg *config.QueueConfig) (*Queue, error) {
+	stakingEventQueue, err := client.NewQueueClient(cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ExpiredStakingQueueName)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error while creating ActiveStakingQueueClient")
+		return nil, fmt.Errorf("failed to initialize staking event queue: %w", err)
 	}
-	handlers := handlers.NewQueueHandler(service)
-	return &Queues{
-		ActiveStakingQueueClient: activeStakingQueueClient,
-		Handlers:                 handlers,
-		processingTimeout:        time.Duration(cfg.QueueProcessingTimeout) * time.Second,
-	}
+
+	return &Queue{
+		stakingExpiredEventQueue: stakingEventQueue,
+	}, nil
 }
 
-// Start all message processing
-func (q *Queues) StartReceivingMessages() {
-	// start processing messages from the active staking queue
-	//startQueueMessageProcessing(q.ActiveStakingQueueClient, q.Handlers.ActiveStakingHandler, q.processingTimeout)
-	// ...add more queues here
-}
-
-// Turn off all message processing
-func (q *Queues) StopReceivingMessages() {
-	q.ActiveStakingQueueClient.Stop()
-}
-
-func startQueueMessageProcessing(
-	queueClient client.QueueClient, handler MessageHandler, timeout time.Duration) {
-	messagesChan, err := queueClient.ReceiveMessages()
-	log.Info().Str("queueName", queueClient.GetQueueName()).Msg("start receiving messages from queue")
+func (q *Queue) SendExpiredDelegationEvent(ctx context.Context, ev client.ExpiredStakingEvent) error {
+	jsonBytes, err := json.Marshal(ev)
 	if err != nil {
-		log.Fatal().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error setting up message channel from queue")
+		return err
 	}
+	messageBody := string(jsonBytes)
 
-	go func() {
-		for message := range messagesChan {
-			// For each message, create a new context with a deadline or timeout
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			err := handler(ctx, message.Body)
-			if err != nil {
-				log.Error().Err(err).Str("queueName", queueClient.GetQueueName()).Msg("error while processing message from queue")
-				// TODO: Add metrics for failed message processing
-				cancel()
-				continue
-			}
+	log.Debug().Str("tx_hash", ev.StakingTxHashHex).Msg("publishing expired staking event")
+	err = q.stakingExpiredEventQueue.SendMessage(ctx, messageBody)
+	if err != nil {
+		return fmt.Errorf("failed to publish staking event: %w", err)
+	}
+	log.Debug().Str("tx_hash", ev.StakingTxHashHex).Msg("successfully published expired staking event")
 
-			delErr := queueClient.DeleteMessage(message.Receipt)
-			if delErr != nil {
-				// TODO: Add metrics for failed message deletion
-				log.Error().Err(delErr).Str("queueName", queueClient.GetQueueName()).Msg("error while deleting message from queue")
-			}
+	return nil
+}
 
-			// TODO: Add metrics for successful message processing
-			cancel()
-		}
-		log.Info().Str("queueName", queueClient.GetQueueName()).Msg("stopped receiving messages from queue")
-	}()
+// Shutdown gracefully stops the interaction with the queue, ensuring all resources are properly released.
+func (q *Queue) Shutdown() error {
+	q.stakingExpiredEventQueue.Stop()
+	return nil
 }
