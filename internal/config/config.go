@@ -9,18 +9,23 @@ import (
 )
 
 type Config struct {
-	Service ServiceConfig `mapstructure:"service"`
+	Poller  PollerConfig  `mapstructure:"poller"`
 	Db      DbConfig      `mapstructure:"db"`
+	Btc     BtcConfig     `mapstructure:"btc"`
 	Queue   QueueConfig   `mapstructure:"queue"`
 	Metrics MetricsConfig `mapstructure:"metrics"`
 }
 
 func (cfg *Config) Validate() error {
-	if err := cfg.Service.Validate(); err != nil {
+	if err := cfg.Poller.Validate(); err != nil {
 		return err
 	}
 
 	if err := cfg.Db.Validate(); err != nil {
+		return err
+	}
+
+	if err := cfg.Btc.Validate(); err != nil {
 		return err
 	}
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/babylonchain/staking-expiry-checker/internal/btcclient"
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/db"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue"
@@ -14,6 +15,7 @@ import (
 
 type Poller struct {
 	dbClient     db.DBClient
+	btcClient    *btcclient.BtcClient
 	queue        *queue.Queue
 	pollInterval time.Duration
 }
@@ -24,11 +26,16 @@ func NewPoller(ctx context.Context, cfg *config.Config) (*Poller, error) {
 		return nil, err
 	}
 
-	q, err := queue.NewQueue(&cfg.Queue)
+	bc, err := btcclient.New(&cfg.Btc)
+	if err != nil {
+		return nil, err
+	}
 
-	pollInterval := cfg.Service.PollInterval
+	q, err := queue.NewQueue(&cfg.Queue)
+	pollInterval := cfg.Poller.PollInterval
 	return &Poller{
 		dbClient:     dbClient,
+		btcClient:    bc,
 		queue:        q,
 		pollInterval: pollInterval,
 	}, nil
@@ -50,10 +57,14 @@ func (p *Poller) Start(ctx context.Context) {
 }
 
 func (p *Poller) pollAndProcess(ctx context.Context) {
-	expiredDelegations, err := p.dbClient.FindExpiredDelegations(ctx, 0)
+	btcTip, err := p.btcClient.Client.GetBlockCount()
+	if err != nil {
+		log.Error().Err(err).Msg("Error getting BTC tip")
+	}
+
+	expiredDelegations, err := p.dbClient.FindExpiredDelegations(ctx, uint64(btcTip))
 	if err != nil {
 		log.Error().Err(err).Msg("Error finding expired delegations")
-		return
 	}
 
 	for _, delegation := range expiredDelegations {

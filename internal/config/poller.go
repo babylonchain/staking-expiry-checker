@@ -8,12 +8,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type ServiceConfig struct {
+type PollerConfig struct {
 	PollInterval time.Duration `mapstructure:"poll-interval"`
 	LogLevel     string        `mapstructure:"log-level"`
 }
 
-func (cfg *ServiceConfig) Validate() error {
+func (cfg *PollerConfig) Validate() error {
 	if cfg.PollInterval < 0 {
 		return errors.New("poll interval cannot be negative")
 	}
@@ -25,7 +25,7 @@ func (cfg *ServiceConfig) Validate() error {
 	return nil
 }
 
-func (cfg *ServiceConfig) ValidateServiceLogLevel() error {
+func (cfg *PollerConfig) ValidateServiceLogLevel() error {
 	// If log level is not set, we don't need to validate it, a default value will be used in service
 	if cfg.LogLevel == "" {
 		return nil
