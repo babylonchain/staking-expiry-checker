@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/babylonchain/staking-expiry-checker/cmd/staking-expiry-checker/cli"
-	"github.com/babylonchain/staking-expiry-checker/internal/api"
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue"
@@ -47,12 +46,4 @@ func main() {
 	// Start the event queue processing
 	queues := queue.New(cfg.Queue, services)
 	queues.StartReceivingMessages()
-
-	apiServer, err := api.New(ctx, cfg, services)
-	if err != nil {
-		log.Fatal().Err(err).Msg("error while setting up staking api service")
-	}
-	if err = apiServer.Start(); err != nil {
-		log.Fatal().Err(err).Msg("error while starting staking api service")
-	}
 }
