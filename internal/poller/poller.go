@@ -43,7 +43,7 @@ func NewPoller(ctx context.Context, cfg *config.Config) (*Poller, error) {
 }
 
 func (p *Poller) Start(ctx context.Context) {
-	ticker := time.NewTicker(p.cfg.PollInterval)
+	ticker := time.NewTicker(p.cfg.Interval)
 
 	for {
 		select {

@@ -9,12 +9,12 @@ import (
 )
 
 type PollerConfig struct {
-	PollInterval time.Duration `mapstructure:"interval"`
-	LogLevel     string        `mapstructure:"log-level"`
+	Interval time.Duration `mapstructure:"interval"`
+	LogLevel string        `mapstructure:"log-level"`
 }
 
 func (cfg *PollerConfig) Validate() error {
-	if cfg.PollInterval < 0 {
+	if cfg.Interval < 0 {
 		return errors.New("poll interval cannot be negative")
 	}
 
