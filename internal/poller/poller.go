@@ -14,10 +14,12 @@ import (
 )
 
 type Poller struct {
-	dbClient     db.DBClient
-	btcClient    *btcclient.BtcClient
-	queue        *queue.Queue
-	pollInterval time.Duration
+	dbClient  db.DBClient
+	btcClient *btcclient.BtcClient
+	queue     *queue.Queue
+	cfg       *config.PollerConfig
+
+	quit chan struct{}
 }
 
 func NewPoller(ctx context.Context, cfg *config.Config) (*Poller, error) {
@@ -32,47 +34,57 @@ func NewPoller(ctx context.Context, cfg *config.Config) (*Poller, error) {
 	}
 
 	q, err := queue.NewQueue(&cfg.Queue)
-	pollInterval := cfg.Poller.PollInterval
 	return &Poller{
-		dbClient:     dbClient,
-		btcClient:    bc,
-		queue:        q,
-		pollInterval: pollInterval,
+		dbClient:  dbClient,
+		btcClient: bc,
+		queue:     q,
+		cfg:       &cfg.Poller,
 	}, nil
 }
 
 func (p *Poller) Start(ctx context.Context) {
-	ticker := time.NewTicker(p.pollInterval)
-	defer ticker.Stop()
+	ticker := time.NewTicker(p.cfg.PollInterval)
 
 	for {
 		select {
 		case <-ticker.C:
-			p.pollAndProcess(ctx)
-		case <-ctx.Done():
-			log.Info().Msg("Poller shutting down")
+			err := p.pollAndProcess(ctx)
+			if err != nil {
+				log.Error().Err(err).Msg("Error polling and processing")
+			}
+
+		case <-p.quit:
+			ticker.Stop() // Stop the ticker
 			return
 		}
 	}
 }
 
-func (p *Poller) pollAndProcess(ctx context.Context) {
-	btcTip, err := p.btcClient.Client.GetBlockCount()
+func (p *Poller) Stop() {
+	close(p.quit)
+}
+
+func (p *Poller) pollAndProcess(ctx context.Context) error {
+	btcTip, err := p.btcClient.GetBlockCount()
 	if err != nil {
-		log.Error().Err(err).Msg("Error getting BTC tip")
+		log.Error().Err(err).Msg("Error getting btc tip")
+		return err
 	}
 
 	expiredDelegations, err := p.dbClient.FindExpiredDelegations(ctx, uint64(btcTip))
 	if err != nil {
 		log.Error().Err(err).Msg("Error finding expired delegations")
+		return err
 	}
 
 	for _, delegation := range expiredDelegations {
 		ev := client.NewExpiredStakingEvent(delegation.StakingTxHashHex)
 		err := p.queue.SendExpiredDelegationEvent(ctx, ev)
 		if err != nil {
-			log.Error().Err(err).Msg("Error sending expired delegation event")
-			// handle the error properly, maybe retry or log
+			log.Error().Err(err).Msg("Error sending expired delegation event to queue")
+			return err
 		}
 	}
+
+	return nil
 }

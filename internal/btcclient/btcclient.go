@@ -5,7 +5,8 @@ import (
 	"github.com/btcsuite/btcd/rpcclient"
 
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
-	"github.com/babylonchain/staking-expiry-checker/internal/types"
+	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
+	"github.com/babylonchain/staking-expiry-checker/internal/utils"
 )
 
 type BtcClient struct {
@@ -16,7 +17,7 @@ type BtcClient struct {
 }
 
 func New(cfg *config.BtcConfig) (*BtcClient, error) {
-	params := types.GetBTCParams(cfg.NetParams)
+	params := utils.GetBTCParams(cfg.NetParams)
 
 	connCfg := &rpcclient.ConnConfig{
 		Host:         cfg.Endpoint,
@@ -37,4 +38,8 @@ func New(cfg *config.BtcConfig) (*BtcClient, error) {
 		Params: params,
 		Cfg:    cfg,
 	}, nil
+}
+
+func (b *BtcClient) GetBlockCount() (int64, error) {
+	return metrics.RecordBtcClientMetrics[int64](b.Client.GetBlockCount)
 }

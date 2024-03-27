@@ -10,6 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
+
+	"github.com/babylonchain/staking-expiry-checker/internal/utils"
 )
 
 type Outcome string
@@ -24,12 +26,10 @@ func (O Outcome) String() string {
 }
 
 var (
-	once                         sync.Once
-	metricsRouter                *chi.Mux
-	httpRequestDurationHistogram *prometheus.HistogramVec
-	processFuncDuration          *prometheus.HistogramVec
-	documentCount                *prometheus.GaugeVec
-	clientRequestLatency         *prometheus.HistogramVec
+	once                       sync.Once
+	metricsRouter              *chi.Mux
+	pollDurationHistogram      *prometheus.HistogramVec
+	btcClientDurationHistogram *prometheus.HistogramVec
 )
 
 // Init initializes the metrics package.
@@ -59,27 +59,49 @@ func initMetricsRouter(metricsPort int) {
 // registerMetrics initializes and register the Prometheus metrics.
 func registerMetrics() {
 	defaultHistogramBucketsSeconds := []float64{0.1, 0.5, 1, 2.5, 5, 10, 30}
-
-	httpRequestDurationHistogram = prometheus.NewHistogramVec(
+	pollDurationHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
-			Help:    "Histogram of http request durations in seconds.",
+			Name:    "poll_duration_seconds",
+			Help:    "Histogram of poll durations in seconds.",
 			Buckets: defaultHistogramBucketsSeconds,
 		},
-		[]string{"endpoint", "status"},
+		[]string{"status"},
+	)
+
+	btcClientDurationHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "btcclient_duration_seconds",
+			Help:    "Histogram of btcclient durations in seconds.",
+			Buckets: defaultHistogramBucketsSeconds,
+		},
+		[]string{"function", "status"},
 	)
 
 	prometheus.MustRegister(
-		httpRequestDurationHistogram,
+		pollDurationHistogram,
+		btcClientDurationHistogram,
 	)
-
 }
 
-// StartHttpRequestDurationTimer starts a timer to measure http request handling duration.
-func StartHttpRequestDurationTimer(endpoint string) func(statusCode int) {
-	startTime := time.Now()
-	return func(statusCode int) {
-		duration := time.Since(startTime).Seconds()
-		httpRequestDurationHistogram.WithLabelValues(endpoint, fmt.Sprintf("%d", statusCode)).Observe(duration)
+func RecordBtcClientMetrics[T any](clientRequest func() (T, error)) (T, error) {
+	var result T
+	functionName := utils.GetFunctionName(1) // Assuming getFunctionName is implemented to use runtime.Caller
+
+	start := time.Now()
+
+	// Perform the client request
+	result, err := clientRequest()
+	// Determine the outcome status based on whether an error occurred
+	status := Success
+	if err != nil {
+		status = Error
 	}
+
+	// Calculate the duration
+	duration := time.Since(start).Seconds()
+
+	// Use WithLabelValues to specify the labels and call Observe to record the duration
+	btcClientDurationHistogram.WithLabelValues(functionName, status.String()).Observe(duration)
+
+	return result, err
 }

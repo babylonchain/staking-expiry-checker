@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/babylonchain/staking-expiry-checker/internal/types"
+	"github.com/babylonchain/staking-expiry-checker/internal/utils"
 )
 
 type BtcConfig struct {
@@ -23,7 +23,7 @@ type BtcConfig struct {
 }
 
 func (cfg *BtcConfig) Validate() error {
-	if _, ok := types.GetValidNetParams()[cfg.NetParams]; !ok {
+	if _, ok := utils.GetValidNetParams()[cfg.NetParams]; !ok {
 		return fmt.Errorf("invalid net params: %v", cfg.NetParams)
 	}
 
