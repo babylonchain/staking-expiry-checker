@@ -30,16 +30,13 @@ func TestProcessExpiredDelegations(t *testing.T) {
 	}
 	var expiredDelegationsSubsequentCalls []model.StakingExpiryHeightDocument
 
-	// Setup the sequence
 	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).
 		Return(expiredDelegationsFirstCall, nil).Once() // Return non-empty slice on first call
 	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).
 		Return(expiredDelegationsSubsequentCalls, nil).Maybe() // Return empty slice on subsequent calls
 
-	// Assuming you're deleting the delegation after processing
 	mockDB.On("DeleteExpiredDelegation", mock.Anything, mockStakingTxHashHex).Return(nil).Once()
 
-	// Integration with test server setup
 	qm, teardown := setupTestServer(t, &TestServerDependency{
 		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
