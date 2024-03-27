@@ -11,22 +11,22 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/internal/queue/client"
 )
 
-type Queue struct {
+type QueueManager struct {
 	stakingExpiredEventQueue client.QueueClient
 }
 
-func NewQueue(cfg *config.QueueConfig) (*Queue, error) {
+func NewQueueManager(cfg *config.QueueConfig) (*QueueManager, error) {
 	stakingEventQueue, err := client.NewQueueClient(cfg.Url, cfg.User, cfg.Pass, client.ExpiredStakingQueueName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize staking event queue: %w", err)
 	}
 
-	return &Queue{
+	return &QueueManager{
 		stakingExpiredEventQueue: stakingEventQueue,
 	}, nil
 }
 
-func (q *Queue) SendExpiredDelegationEvent(ctx context.Context, ev client.ExpiredStakingEvent) error {
+func (qm *QueueManager) SendExpiredDelegationEvent(ctx context.Context, ev client.ExpiredStakingEvent) error {
 	jsonBytes, err := json.Marshal(ev)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (q *Queue) SendExpiredDelegationEvent(ctx context.Context, ev client.Expire
 	messageBody := string(jsonBytes)
 
 	log.Debug().Str("tx_hash", ev.StakingTxHashHex).Msg("publishing expired staking event")
-	err = q.stakingExpiredEventQueue.SendMessage(ctx, messageBody)
+	err = qm.stakingExpiredEventQueue.SendMessage(ctx, messageBody)
 	if err != nil {
 		return fmt.Errorf("failed to publish staking event: %w", err)
 	}
@@ -44,7 +44,7 @@ func (q *Queue) SendExpiredDelegationEvent(ctx context.Context, ev client.Expire
 }
 
 // Shutdown gracefully stops the interaction with the queue, ensuring all resources are properly released.
-func (q *Queue) Shutdown() error {
-	q.stakingExpiredEventQueue.Stop()
+func (qm *QueueManager) Shutdown() error {
+	qm.stakingExpiredEventQueue.Stop()
 	return nil
 }

@@ -16,7 +16,7 @@ type BtcClient struct {
 	cfg    *config.BtcConfig
 }
 
-func New(cfg *config.BtcConfig) (*BtcClient, error) {
+func NewBtcClient(cfg *config.BtcConfig) (*BtcClient, error) {
 	params := utils.GetBTCParams(cfg.NetParams)
 
 	connCfg := &rpcclient.ConnConfig{

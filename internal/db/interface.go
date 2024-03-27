@@ -6,7 +6,7 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
 )
 
-type DBClient interface {
+type DbInterface interface {
 	Ping(ctx context.Context) error
 	FindExpiredDelegations(
 		ctx context.Context, btcTipHeight uint64,

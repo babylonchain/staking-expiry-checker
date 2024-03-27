@@ -43,7 +43,8 @@ run-local:
 	go run cmd/staking-expiry-checker/main.go --config config/config-local.yml
 
 generate-mock-interface:
-	cd internal/db && mockery --name=DBClient --output=../../tests/mocks --outpkg=dbmock --filename=mock_db_client.go
+	cd internal/db && mockery --name=DbInterface --output=../../tests/mocks --outpkg=mocks --filename=mock_db_client.go
+	cd internal/btcclient && mockery --name=BtcInterface --output=../../tests/mocks --outpkg=mocks --filename=mock_btc_client.go
 
 tests:
 	./bin/local-startup.sh;
