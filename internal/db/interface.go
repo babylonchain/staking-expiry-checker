@@ -11,4 +11,7 @@ type DbInterface interface {
 	FindExpiredDelegations(
 		ctx context.Context, btcTipHeight uint64,
 	) ([]model.StakingExpiryHeightDocument, error)
+	DeleteExpiredDelegation(
+		ctx context.Context, stakingTxHashHex string,
+	) error
 }

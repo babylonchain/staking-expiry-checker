@@ -155,7 +155,7 @@ func (c *RabbitMqClient) GetMessageCount() (int, error) {
 	}
 
 	// Inspect the queue to get various details including the message count
-	queue, err := c.channel.QueueDeclare(c.queueName, false, true, true, false, nil)
+	queue, err := c.channel.QueueDeclarePassive(c.queueName, false, true, true, false, nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed to inspect queue %s: %w", c.queueName, err)
 	}

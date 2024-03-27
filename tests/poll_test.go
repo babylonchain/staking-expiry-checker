@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
 	"github.com/babylonchain/staking-expiry-checker/tests/mocks"
@@ -21,27 +22,35 @@ func TestProcessExpiredDelegations(t *testing.T) {
 	expectedBtcTip := int64(1000)
 	mockBtc.On("GetBlockCount").Return(expectedBtcTip, nil)
 
-	expiredDelegations := []model.StakingExpiryHeightDocument{
+	expiredDelegationsFirstCall := []model.StakingExpiryHeightDocument{
 		{
 			StakingTxHashHex: mockStakingTxHashHex,
 			ExpireBtcHeight:  999,
 		},
 	}
-	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).Return(expiredDelegations, nil)
+	var expiredDelegationsSubsequentCalls []model.StakingExpiryHeightDocument
+
+	// Setup the sequence
+	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).
+		Return(expiredDelegationsFirstCall, nil).Once() // Return non-empty slice on first call
+	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).
+		Return(expiredDelegationsSubsequentCalls, nil).Maybe() // Return empty slice on subsequent calls
+
+	// Assuming you're deleting the delegation after processing
+	mockDB.On("DeleteExpiredDelegation", mock.Anything, mockStakingTxHashHex).Return(nil).Once()
 
 	// Integration with test server setup
-	_, teardown := setupTestServer(t, &TestServerDependency{
+	qm, teardown := setupTestServer(t, &TestServerDependency{
 		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
 	})
 	defer teardown()
 
-	//mockDB.AssertExpectations(t)
-	//mockBtc.AssertExpectations(t)
-
-	time.Sleep(10 * time.Second)
-
-	//expiredQueueMessageCount, err := queueManager.GetExpiredQueueMessageCount()
-	//assert.NoError(t, err)
-	//assert.Equal(t, 1, expiredQueueMessageCount)
+	// Wait for the data
+	require.Eventually(
+		t, func() bool {
+			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
+			return err == nil && expiredQueueMessageCount == 1
+		}, 2*time.Minute, 100*time.Millisecond,
+	)
 }

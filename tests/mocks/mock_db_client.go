@@ -15,6 +15,24 @@ type DbInterface struct {
 	mock.Mock
 }
 
+// DeleteExpiredDelegation provides a mock function with given fields: ctx, stakingTxHashHex
+func (_m *DbInterface) DeleteExpiredDelegation(ctx context.Context, stakingTxHashHex string) error {
+	ret := _m.Called(ctx, stakingTxHashHex)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteExpiredDelegation")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, stakingTxHashHex)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindExpiredDelegations provides a mock function with given fields: ctx, btcTipHeight
 func (_m *DbInterface) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.StakingExpiryHeightDocument, error) {
 	ret := _m.Called(ctx, btcTipHeight)

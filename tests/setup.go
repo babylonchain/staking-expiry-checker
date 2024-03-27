@@ -150,7 +150,6 @@ func setUpTestQueue(t *testing.T, cfg *config.QueueConfig) (*queue.QueueManager,
 		return nil, err
 	}
 
-	// Start the actual queue processing in our codebase
 	qm, err := queue.NewQueueManager(cfg)
 	if err != nil {
 		t.Fatalf("failed to setup queue manager in test: %v", err)

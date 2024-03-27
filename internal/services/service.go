@@ -39,6 +39,10 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 		if err := s.queueManager.SendExpiredDelegationEvent(ctx, ev); err != nil {
 			return err
 		}
+		// After successfully sending the event, delete the entry from the database.
+		if err := s.db.DeleteExpiredDelegation(ctx, delegation.StakingTxHashHex); err != nil {
+			return err
+		}
 	}
 
 	return nil
