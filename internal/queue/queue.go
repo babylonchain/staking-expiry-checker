@@ -16,7 +16,7 @@ type Queue struct {
 }
 
 func NewQueue(cfg *config.QueueConfig) (*Queue, error) {
-	stakingEventQueue, err := client.NewQueueClient(cfg.Url, cfg.QueueUser, cfg.QueuePassword, client.ExpiredStakingQueueName)
+	stakingEventQueue, err := client.NewQueueClient(cfg.Url, cfg.User, cfg.Pass, client.ExpiredStakingQueueName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize staking event queue: %w", err)
 	}
