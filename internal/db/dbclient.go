@@ -43,7 +43,6 @@ func (db *Database) Ping(ctx context.Context) error {
 
 func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.StakingExpiryHeightDocument, error) {
 	client := db.Client.Database(db.DbName).Collection(model.StakingExpiryHeightsCollection)
-
 	filter := bson.M{"expire_btc_height": bson.M{"$lte": btcTipHeight}}
 
 	cursor, err := client.Find(ctx, filter)

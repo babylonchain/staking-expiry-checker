@@ -9,7 +9,7 @@ import (
 )
 
 type PollerConfig struct {
-	PollInterval time.Duration `mapstructure:"poll-interval"`
+	PollInterval time.Duration `mapstructure:"interval"`
 	LogLevel     string        `mapstructure:"log-level"`
 }
 
