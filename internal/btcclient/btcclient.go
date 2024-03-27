@@ -10,10 +10,10 @@ import (
 )
 
 type BtcClient struct {
-	Client *rpcclient.Client
+	client *rpcclient.Client
 
-	Params *chaincfg.Params
-	Cfg    *config.BtcConfig
+	params *chaincfg.Params
+	cfg    *config.BtcConfig
 }
 
 func New(cfg *config.BtcConfig) (*BtcClient, error) {
@@ -34,12 +34,12 @@ func New(cfg *config.BtcConfig) (*BtcClient, error) {
 	}
 
 	return &BtcClient{
-		Client: rpcClient,
-		Params: params,
-		Cfg:    cfg,
+		client: rpcClient,
+		params: params,
+		cfg:    cfg,
 	}, nil
 }
 
 func (b *BtcClient) GetBlockCount() (int64, error) {
-	return metrics.RecordBtcClientMetrics[int64](b.Client.GetBlockCount)
+	return metrics.RecordBtcClientMetrics[int64](b.client.GetBlockCount)
 }

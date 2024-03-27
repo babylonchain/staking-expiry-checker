@@ -11,13 +11,8 @@ import (
 )
 
 type Database struct {
-	DbName string
-	Client *mongo.Client
-}
-
-type DbResultMap[T any] struct {
-	Data            []T    `json:"data"`
-	PaginationToken string `json:"paginationToken"`
+	dbName string
+	client *mongo.Client
 }
 
 func New(ctx context.Context, dbName string, dbURI string) (*Database, error) {
@@ -28,13 +23,13 @@ func New(ctx context.Context, dbName string, dbURI string) (*Database, error) {
 	}
 
 	return &Database{
-		DbName: dbName,
-		Client: client,
+		dbName: dbName,
+		client: client,
 	}, nil
 }
 
 func (db *Database) Ping(ctx context.Context) error {
-	err := db.Client.Ping(ctx, nil)
+	err := db.client.Ping(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -42,7 +37,7 @@ func (db *Database) Ping(ctx context.Context) error {
 }
 
 func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.StakingExpiryHeightDocument, error) {
-	client := db.Client.Database(db.DbName).Collection(model.StakingExpiryHeightsCollection)
+	client := db.client.Database(db.dbName).Collection(model.StakingExpiryHeightsCollection)
 	filter := bson.M{"expire_btc_height": bson.M{"$lte": btcTipHeight}}
 
 	cursor, err := client.Find(ctx, filter)
