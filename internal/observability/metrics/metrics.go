@@ -85,7 +85,7 @@ func registerMetrics() {
 
 func RecordBtcClientMetrics[T any](clientRequest func() (T, error)) (T, error) {
 	var result T
-	functionName := utils.GetFunctionName(1) // Assuming getFunctionName is implemented to use runtime.Caller
+	functionName := utils.GetFunctionName(1)
 
 	start := time.Now()
 
