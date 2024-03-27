@@ -43,8 +43,11 @@ func (qm *QueueManager) SendExpiredDelegationEvent(ctx context.Context, ev clien
 	return nil
 }
 
+func (qm *QueueManager) GetExpiredQueueMessageCount() (int, error) {
+	return qm.stakingExpiredEventQueue.GetMessageCount()
+}
+
 // Shutdown gracefully stops the interaction with the queue, ensuring all resources are properly released.
-func (qm *QueueManager) Shutdown() error {
+func (qm *QueueManager) Shutdown() {
 	qm.stakingExpiredEventQueue.Stop()
-	return nil
 }

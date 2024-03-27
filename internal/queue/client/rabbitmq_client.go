@@ -146,3 +146,20 @@ func (c *RabbitMqClient) Stop() {
 func (c *RabbitMqClient) GetQueueName() string {
 	return c.queueName
 }
+
+// GetMessageCount returns the number of messages in the queue.
+func (c *RabbitMqClient) GetMessageCount() (int, error) {
+	// Ensure the channel is open
+	if c.channel == nil {
+		return 0, fmt.Errorf("RabbitMQ channel not initialized")
+	}
+
+	// Inspect the queue to get various details including the message count
+	queue, err := c.channel.QueueDeclare(c.queueName, false, true, true, false, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to inspect queue %s: %w", c.queueName, err)
+	}
+
+	// The Messages field contains the number of messages in the queue
+	return queue.Messages, nil
+}

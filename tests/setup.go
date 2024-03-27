@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,7 +31,7 @@ type TestServerDependency struct {
 	MockBtcClient   btcclient.BtcInterface
 }
 
-func setupTestServer(t *testing.T, dep *TestServerDependency) func() {
+func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManager, func()) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	cfg, err := config.New("./config-test.yml")
 	if err != nil {
@@ -43,7 +44,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) func() {
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
-	qm, err := setUpTestQueue(&cfg.Queue)
+	qm, err := setUpTestQueue(t, &cfg.Queue)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}
@@ -77,11 +78,12 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) func() {
 
 	teardown := func() {
 		p.Stop()
+		qm.Shutdown()
 		cancel() // Cancel the context to release resources
 	}
 
 	go p.Start(ctx)
-	return teardown
+	return qm, teardown
 }
 
 // Generic function to apply configuration overrides
@@ -133,12 +135,11 @@ func setupTestDB(cfg *config.Config) {
 	}
 }
 
-func setUpTestQueue(cfg *config.QueueConfig) (*queue.QueueManager, error) {
+func setUpTestQueue(t *testing.T, cfg *config.QueueConfig) (*queue.QueueManager, error) {
 	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.User, cfg.Pass, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
-		log.Fatal("failed to connect to RabbitMQ in test: ", err)
-		return nil, err
+		t.Fatalf("failed to connect to RabbitMQ in test: %v", err)
 	}
 	defer conn.Close()
 	err = purgeQueues(conn, []string{
@@ -152,8 +153,7 @@ func setUpTestQueue(cfg *config.QueueConfig) (*queue.QueueManager, error) {
 	// Start the actual queue processing in our codebase
 	qm, err := queue.NewQueueManager(cfg)
 	if err != nil {
-		log.Fatal("failed to initialize queue manager in test: ", err)
-		return nil, err
+		t.Fatalf("failed to setup queue manager in test: %v", err)
 	}
 
 	return qm, nil
@@ -170,6 +170,10 @@ func purgeQueues(conn *amqp091.Connection, queues []string) error {
 	for _, queue := range queues {
 		_, err := ch.QueuePurge(queue, false)
 		if err != nil {
+			if strings.Contains(err.Error(), "no queue") {
+				fmt.Printf("Queue '%s' not found, ignoring...\n", queue)
+				continue // Ignore this error and proceed with the next queue
+			}
 			return fmt.Errorf("failed to purge queue in test %s: %w", queue, err)
 		}
 	}

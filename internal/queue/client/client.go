@@ -14,6 +14,7 @@ type QueueClient interface {
 	DeleteMessage(receipt string) error
 	Stop()
 	GetQueueName() string
+	GetMessageCount() (int, error)
 }
 
 func NewQueueClient(queueURL, user, pass, queueName string) (QueueClient, error) {
