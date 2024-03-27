@@ -11,8 +11,8 @@ btc:
   rpc-user: rpcuser
   rpc-pass: rpcpass
 queue:
-  user: user # can be replaced by values in .env file
-  pass: password
+  user: guest # can be replaced by values in .env file
+  pass: guest
   url: "localhost:5672"
   processing_timeout: 5 # 5 second
 metrics:
