@@ -38,7 +38,7 @@ func main() {
 	metricsPort := cfg.Metrics.GetMetricsPort()
 	metrics.Init(metricsPort)
 
-	// Start the staking poller
+	// Start the expiry checker poller
 	p, err := poller.NewPoller(ctx, cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while setting up staking poller")
