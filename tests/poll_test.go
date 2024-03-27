@@ -51,6 +51,6 @@ func TestProcessExpiredDelegations(t *testing.T) {
 		t, func() bool {
 			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
 			return err == nil && expiredQueueMessageCount == 1
-		}, 2*time.Minute, 100*time.Millisecond,
+		}, 10*time.Second, 100*time.Millisecond,
 	)
 }
