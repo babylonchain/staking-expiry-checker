@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  staking-expiry-checker:
+    image: babylonchain/staking-expiry-checker:latest
+    container_name: staking-expiry-checker
+    environment:
+      - CONFIG=/home/staking-expiry-checker/config.yml
+    volumes:
+      - ./config/config-docker.yml:/home/staking-expiry-checker/config.yml:Z
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./bin/init-mongo.sh:/init-mongo.sh
+    entrypoint: [ "/init-mongo.sh" ]
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5673:5672" # AMQP protocol port
+      - "15673:15672" # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - "./rabbitmq_data:/var/lib/rabbitmq"
