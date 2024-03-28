@@ -22,13 +22,13 @@ func TestProcessExpiredDelegations(t *testing.T) {
 	expectedBtcTip := int64(1000)
 	mockBtc.On("GetBlockCount").Return(expectedBtcTip, nil)
 
-	expiredDelegationsFirstCall := []model.StakingExpiryHeightDocument{
+	expiredDelegationsFirstCall := []model.TimeLockDocument{
 		{
 			StakingTxHashHex: mockStakingTxHashHex,
-			ExpireBtcHeight:  999,
+			ExpireHeight:     999,
 		},
 	}
-	var expiredDelegationsSubsequentCalls []model.StakingExpiryHeightDocument
+	var expiredDelegationsSubsequentCalls []model.TimeLockDocument
 
 	mockDB.On("FindExpiredDelegations", mock.Anything, mock.Anything).
 		Return(expiredDelegationsFirstCall, nil).Once() // Return non-empty slice on first call

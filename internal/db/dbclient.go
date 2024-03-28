@@ -37,9 +37,9 @@ func (db *Database) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.StakingExpiryHeightDocument, error) {
-	client := db.client.Database(db.dbName).Collection(model.StakingExpiryHeightsCollection)
-	filter := bson.M{"expire_btc_height": bson.M{"$lte": btcTipHeight}}
+func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.TimeLockDocument, error) {
+	client := db.client.Database(db.dbName).Collection(model.TimeLockCollection)
+	filter := bson.M{"expire_height": bson.M{"$lte": btcTipHeight}}
 
 	cursor, err := client.Find(ctx, filter)
 	if err != nil {
@@ -47,7 +47,7 @@ func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uin
 	}
 	defer cursor.Close(ctx)
 
-	var delegations []model.StakingExpiryHeightDocument
+	var delegations []model.TimeLockDocument
 	if err = cursor.All(ctx, &delegations); err != nil {
 		return nil, err
 	}
@@ -57,8 +57,8 @@ func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uin
 
 // DeleteExpiredDelegation deletes a delegation identified by its staking transaction hash.
 func (db *Database) DeleteExpiredDelegation(ctx context.Context, stakingTxHashHex string) error {
-	client := db.client.Database(db.dbName).Collection(model.StakingExpiryHeightsCollection)
-	filter := bson.M{"_id": stakingTxHashHex}
+	client := db.client.Database(db.dbName).Collection(model.TimeLockCollection)
+	filter := bson.M{"staking_tx_hash_hex": stakingTxHashHex}
 
 	result, err := client.DeleteOne(ctx, filter)
 	if err != nil {

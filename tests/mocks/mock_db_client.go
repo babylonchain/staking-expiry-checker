@@ -34,23 +34,23 @@ func (_m *DbInterface) DeleteExpiredDelegation(ctx context.Context, stakingTxHas
 }
 
 // FindExpiredDelegations provides a mock function with given fields: ctx, btcTipHeight
-func (_m *DbInterface) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.StakingExpiryHeightDocument, error) {
+func (_m *DbInterface) FindExpiredDelegations(ctx context.Context, btcTipHeight uint64) ([]model.TimeLockDocument, error) {
 	ret := _m.Called(ctx, btcTipHeight)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindExpiredDelegations")
 	}
 
-	var r0 []model.StakingExpiryHeightDocument
+	var r0 []model.TimeLockDocument
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint64) ([]model.StakingExpiryHeightDocument, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uint64) ([]model.TimeLockDocument, error)); ok {
 		return rf(ctx, btcTipHeight)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint64) []model.StakingExpiryHeightDocument); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uint64) []model.TimeLockDocument); ok {
 		r0 = rf(ctx, btcTipHeight)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]model.StakingExpiryHeightDocument)
+			r0 = ret.Get(0).([]model.TimeLockDocument)
 		}
 	}
 

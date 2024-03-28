@@ -10,7 +10,7 @@ type DbInterface interface {
 	Ping(ctx context.Context) error
 	FindExpiredDelegations(
 		ctx context.Context, btcTipHeight uint64,
-	) ([]model.StakingExpiryHeightDocument, error)
+	) ([]model.TimeLockDocument, error)
 	DeleteExpiredDelegation(
 		ctx context.Context, stakingTxHashHex string,
 	) error
