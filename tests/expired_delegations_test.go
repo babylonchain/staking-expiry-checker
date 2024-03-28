@@ -16,7 +16,7 @@ const (
 	mockStakingTxHashHex = "0x1234567890abcdef"
 )
 
-func TestProcessExpiredDelegations_BestCase(t *testing.T) {
+func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
 	mockDB := new(mocks.DbInterface)
 	mockBtc := new(mocks.BtcInterface)
 
