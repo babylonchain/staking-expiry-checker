@@ -41,7 +41,8 @@ func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uin
 	client := db.client.Database(db.dbName).Collection(model.TimeLockCollection)
 	filter := bson.M{"expire_height": bson.M{"$lte": btcTipHeight}}
 
-	cursor, err := client.Find(ctx, filter)
+	opts := options.Find().SetLimit(10)
+	cursor, err := client.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
