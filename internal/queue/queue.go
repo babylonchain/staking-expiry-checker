@@ -26,7 +26,7 @@ func NewQueueManager(cfg *config.QueueConfig) (*QueueManager, error) {
 	}, nil
 }
 
-func (qm *QueueManager) SendExpiredDelegationEvent(ctx context.Context, ev client.ExpiredStakingEvent) error {
+func (qm *QueueManager) SendExpiredStakingEvent(ctx context.Context, ev client.ExpiredStakingEvent) error {
 	jsonBytes, err := json.Marshal(ev)
 	if err != nil {
 		return err

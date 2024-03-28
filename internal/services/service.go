@@ -36,7 +36,7 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 
 	for _, delegation := range expiredDelegations {
 		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex)
-		if err := s.queueManager.SendExpiredDelegationEvent(ctx, ev); err != nil {
+		if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
 			return err
 		}
 		// After successfully sending the event, delete the entry from the database.
