@@ -21,7 +21,7 @@ jobs:
             - go-mod-v6-{{ checksum "go.sum" }}
       - add_ssh_keys
       - run:
-          name: Build Staking API Service
+          name: Build Staking Expiry Checker
           command: make build
       - save_cache:
           key: go-mod-v6-{{ checksum "go.sum" }}

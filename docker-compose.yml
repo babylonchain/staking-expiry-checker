@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  staking-api-service:
+  staking-expiry-checker:
     image: babylonchain/staking-expiry-checker:latest
     container_name: staking-expiry-checker
     environment:
