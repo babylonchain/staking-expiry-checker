@@ -36,7 +36,7 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 	}
 
 	for _, delegation := range expiredDelegations {
-		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex)
+		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, delegation.TxType)
 		if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
 			return err
 		}

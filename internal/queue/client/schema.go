@@ -1,5 +1,7 @@
 package client
 
+import "github.com/babylonchain/staking-expiry-checker/internal/types"
+
 const (
 	ActiveStakingQueueName    string = "active_staking_queue"
 	UnbondingStakingQueueName string = "unbonding_staking_queue"
@@ -126,8 +128,9 @@ func NewWithdrawStakingEvent(stakingTxHashHex string) WithdrawStakingEvent {
 }
 
 type ExpiredStakingEvent struct {
-	EventType        EventType `json:"event_type"` // always 4. ExpiredStakingEventType
-	StakingTxHashHex string    `json:"staking_tx_hash_hex"`
+	EventType        EventType           `json:"event_type"` // always 4. ExpiredStakingEventType
+	StakingTxHashHex string              `json:"staking_tx_hash_hex"`
+	TxType           types.StakingTxType `json:"tx_type"`
 }
 
 func (e ExpiredStakingEvent) GetEventType() EventType {
@@ -138,9 +141,10 @@ func (e ExpiredStakingEvent) GetStakingTxHash() string {
 	return e.StakingTxHashHex
 }
 
-func NewExpiredStakingEvent(stakingTxHashHex string) ExpiredStakingEvent {
+func NewExpiredStakingEvent(stakingTxHashHex string, stakingTxType types.StakingTxType) ExpiredStakingEvent {
 	return ExpiredStakingEvent{
 		EventType:        ExpiredStakingEventType,
 		StakingTxHashHex: stakingTxHashHex,
+		TxType:           stakingTxType,
 	}
 }
