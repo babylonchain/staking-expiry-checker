@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -56,18 +57,18 @@ func (db *Database) FindExpiredDelegations(ctx context.Context, btcTipHeight uin
 	return delegations, nil
 }
 
-// DeleteExpiredDelegation deletes a delegation identified by its staking transaction hash.
-func (db *Database) DeleteExpiredDelegation(ctx context.Context, stakingTxHashHex string) error {
+func (db *Database) DeleteExpiredDelegation(ctx context.Context, id primitive.ObjectID) error {
 	client := db.client.Database(db.dbName).Collection(model.TimeLockCollection)
-	filter := bson.M{"staking_tx_hash_hex": stakingTxHashHex}
+	filter := bson.M{"_id": id}
 
 	result, err := client.DeleteOne(ctx, filter)
 	if err != nil {
-		return fmt.Errorf("failed to delete expired delegation %s: %w", stakingTxHashHex, err)
+		return fmt.Errorf("failed to delete expired delegation with ID %v: %w", id, err)
 	}
 
+	// Check if any document was deleted
 	if result.DeletedCount == 0 {
-		return fmt.Errorf("no expired delegation found with tx hash %s", stakingTxHashHex)
+		return fmt.Errorf("no expired delegation found with ID %v", id)
 	}
 
 	return nil
