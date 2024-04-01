@@ -15,44 +15,52 @@ import (
 )
 
 func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
-	mockDB := new(mocks.DbInterface)
+	// setup mock btc client
 	mockBtc := new(mocks.BtcInterface)
-
 	expectedBtcTip := int64(1000)
 	mockBtc.On("GetBlockCount").Return(expectedBtcTip, nil)
 
-	// Create an ObjectID for testing purposes
-	testID, _ := primitive.ObjectIDFromHex("507f1f77bcf86cd799439011")
-	expiredDelegationsFirstCall := []model.TimeLockDocument{
-		{
-			ID:               testID,
-			StakingTxHashHex: "mockStakingTxHashHex",
-			ExpireHeight:     999,
-			TxType:           types.Active,
-		},
-	}
-	var expiredDelegationsSubsequentCalls []model.TimeLockDocument
+	// assert that db is empty
+	docs := fetchAllTestDelegations(t)
+	require.Empty(t, docs)
 
-	mockDB.On("FindExpiredDelegations", mock.Anything, uint64(expectedBtcTip)).
-		Return(expiredDelegationsFirstCall, nil).Once() // Return non-empty slice on first call
-	mockDB.On("FindExpiredDelegations", mock.Anything, uint64(expectedBtcTip)).
-		Return(expiredDelegationsSubsequentCalls, nil).Maybe() // Return empty slice on subsequent calls
-
-	mockDB.On("DeleteExpiredDelegation", mock.Anything, expiredDelegationsFirstCall[0].ID).Return(nil).Once()
-
+	// setup test server
 	qm, teardown := setupTestServer(t, &TestServerDependency{
-		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
 	})
 	defer teardown()
+
+	// insert in db
+	expiredDelegations := []model.TimeLockDocument{
+		{
+			ID:               primitive.NewObjectID(),
+			StakingTxHashHex: "mockStakingTxHashHex1",
+			ExpireHeight:     999,
+			TxType:           types.Active,
+		},
+
+		{
+			ID:               primitive.NewObjectID(),
+			StakingTxHashHex: "mockStakingTxHashHex2",
+			ExpireHeight:     999,
+			TxType:           types.Unbonding,
+		},
+	}
+	insertTestDelegations(t, expiredDelegations)
 
 	// Wait for the data
 	require.Eventually(
 		t, func() bool {
 			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
-			return err == nil && expiredQueueMessageCount == 1
+			return err == nil && expiredQueueMessageCount == 2
 		}, 10*time.Second, 100*time.Millisecond,
 	)
+
+	// TODO: assert message contents to ensure the correct data is being sent
+
+	// assert that documents are deleted now and db is empty
+	docs = fetchAllTestDelegations(t)
+	require.Empty(t, docs)
 }
 
 func TestProcessExpiredDelegations_ErrorGettingBlockCount(t *testing.T) {

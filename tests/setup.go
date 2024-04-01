@@ -18,6 +18,7 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/internal/btcclient"
 	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/db"
+	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
 	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
 	"github.com/babylonchain/staking-expiry-checker/internal/poller"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue"
@@ -54,9 +55,17 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManag
 		btcClient btcclient.BtcInterface
 	)
 
-	if dep != nil && dep.MockBtcClient != nil && dep.MockDbClient != nil {
-		dbClient = dep.MockDbClient
+	if dep != nil && dep.MockBtcClient != nil {
 		btcClient = dep.MockBtcClient
+	} else {
+		btcClient, err = btcclient.NewBtcClient(&cfg.Btc)
+		if err != nil {
+			t.Fatalf("Failed to initialize btc client: %v", err)
+		}
+	}
+
+	if dep != nil && dep.MockDbClient != nil {
+		dbClient = dep.MockDbClient
 	} else {
 		setupTestDB(cfg)
 		dbClient, err = db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
@@ -64,10 +73,6 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManag
 			t.Fatalf("Failed to initialize db client: %v", err)
 		}
 
-		btcClient, err = btcclient.NewBtcClient(&cfg.Btc)
-		if err != nil {
-			t.Fatalf("Failed to initialize btc client: %v", err)
-		}
 	}
 
 	service := services.NewService(dbClient, btcClient, qm)
@@ -193,4 +198,61 @@ func sendTestMessage[T any](client client.QueueClient, data []T) error {
 		}
 	}
 	return nil
+}
+
+func insertTestDelegations(t *testing.T, docs []model.TimeLockDocument) {
+	cfg, err := config.New("./config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load test config: %v", err)
+	}
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.Db.Address))
+	if err != nil {
+		log.Fatal(err)
+	}
+	database := client.Database(cfg.Db.DbName)
+	collection := database.Collection(model.TimeLockCollection)
+
+	// Convert slice of TimeLockDocument to slice of interface{} for InsertMany
+	var documents []interface{}
+	for _, doc := range docs {
+		documents = append(documents, doc)
+	}
+
+	_, err = collection.InsertMany(context.Background(), documents)
+	if err != nil {
+		t.Fatalf("Failed to insert test delegations: %v", err)
+	}
+}
+
+func fetchAllTestDelegations(t *testing.T) []model.TimeLockDocument {
+	cfg, err := config.New("./config-test.yml")
+	if err != nil {
+		t.Fatalf("Failed to load test config: %v", err)
+	}
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.Db.Address))
+	if err != nil {
+		log.Fatal(err)
+	}
+	database := client.Database(cfg.Db.DbName)
+	collection := database.Collection(model.TimeLockCollection)
+
+	cursor, err := collection.Find(context.Background(), bson.D{})
+	if err != nil {
+		t.Fatalf("Failed to fetch test delegations: %v", err)
+	}
+	defer cursor.Close(context.Background())
+
+	var results []model.TimeLockDocument
+	for cursor.Next(context.Background()) {
+		var result model.TimeLockDocument
+		err := cursor.Decode(&result)
+		if err != nil {
+			t.Fatalf("Failed to decode test delegations: %v", err)
+		}
+		results = append(results, result)
+	}
+
+	return results
 }
