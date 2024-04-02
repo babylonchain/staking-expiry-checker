@@ -57,8 +57,8 @@ configFiles:
       db-name: staking-api-service
     btc:
       endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
-      disable-tls: false
-      net-params: testnet
+      disable-tls: true
+      net-params: signet
       rpc-user: BTC_USER
       rpc-pass: BTC_PASS
     queue:
