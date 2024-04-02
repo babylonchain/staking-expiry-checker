@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
@@ -182,21 +181,6 @@ func purgeQueues(conn *amqp091.Connection, queues []string) error {
 		}
 	}
 
-	return nil
-}
-
-func sendTestMessage[T any](client client.QueueClient, data []T) error {
-	for _, d := range data {
-		jsonBytes, err := json.Marshal(d)
-		if err != nil {
-			return err
-		}
-		messageBody := string(jsonBytes)
-		err = client.SendMessage(context.TODO(), messageBody)
-		if err != nil {
-			return fmt.Errorf("failed to publish a message to queue %s: %w", client.GetQueueName(), err)
-		}
-	}
 	return nil
 }
 
