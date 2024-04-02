@@ -5,13 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
+	queueclient "github.com/babylonchain/staking-expiry-checker/internal/queue/client"
+	"github.com/babylonchain/staking-expiry-checker/tests/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
-	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
-	"github.com/babylonchain/staking-expiry-checker/internal/types"
-	"github.com/babylonchain/staking-expiry-checker/tests/mocks"
 )
 
 func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
@@ -36,14 +35,14 @@ func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
 			ID:               primitive.NewObjectID(),
 			StakingTxHashHex: "mockStakingTxHashHex1",
 			ExpireHeight:     999,
-			TxType:           types.Active,
+			TxType:           queueclient.Active.ToString(),
 		},
 
 		{
 			ID:               primitive.NewObjectID(),
 			StakingTxHashHex: "mockStakingTxHashHex2",
 			ExpireHeight:     999,
-			TxType:           types.Unbonding,
+			TxType:           queueclient.Unbonding.ToString(),
 		},
 	}
 	insertTestDelegations(t, expiredDelegations)
@@ -122,7 +121,7 @@ func TestProcessExpiredDelegations_ErrorDeletingExpiredDelegation(t *testing.T) 
 		ID:               testID,
 		StakingTxHashHex: "mockStakingTxHashHex",
 		ExpireHeight:     999,
-		TxType:           types.Active,
+		TxType:           queueclient.Active.ToString(),
 	}
 
 	mockDB.On("FindExpiredDelegations", mock.Anything, uint64(expectedBtcTip)).
