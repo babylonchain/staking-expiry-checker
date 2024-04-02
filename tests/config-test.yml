@@ -2,7 +2,7 @@ poller:
   interval: 2s
   log-level: debug
 db:
-  address: "mongodb://localhost:27017?replicaSet=RS"
+  address: "mongodb://localhost:27017"
   db-name: staking-api-service
 btc:
   endpoint: localhost:18332 # use port 18332 for testnet, 8332 for mainnet
