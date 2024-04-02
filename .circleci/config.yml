@@ -104,6 +104,8 @@ jobs:
             HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
             sed -i "s/USER/$RABBITMQ_USER/g" $HELM_VALUES
             sed -i "s/PASSWORD/$RABBITMQ_PASSWORD/g" $HELM_VALUES
+            sed -i "s/RPCUSER/$BTC_USER/g" $HELM_VALUES
+            sed -i "s/RPCPASS/$BTC_PASS/g" $HELM_VALUES
       - run:
           name: Perform a dry run of the new release
           command: |
@@ -112,7 +114,7 @@ jobs:
               --values /home/circleci/project/.circleci/values-mainnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
-              babylon-api $HELM_CHART_REPO
+              staking-expiry-checker $HELM_CHART_REPO
       - run:
           name: Release new service version in an atomic way
           command: |
@@ -121,7 +123,7 @@ jobs:
               --values /home/circleci/project/.circleci/values-mainnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
-              babylon-api $HELM_CHART_REPO
+              staking-expiry-checker $HELM_CHART_REPO
 
 workflows:
   CICD:
@@ -134,18 +136,18 @@ workflows:
       - push_docker:
           requires:
             - build_docker
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              only:
-                - main
+              #filters:
+              #  tags:
+              #    only: /.*/
+              #  branches:
+              #    only:
+              #      - main
       - deploy_mainnet:
           requires:
             - push_docker
           #  - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
-                - dev
+          #filters:
+          #  branches:
+          #    only:
+          #      - main
+          #      - dev

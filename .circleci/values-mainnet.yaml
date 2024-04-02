@@ -3,7 +3,7 @@ name: staking-expiry-checker
 deployment:
   image: 490721144737.dkr.ecr.us-east-1.amazonaws.com/staking-expiry-checker
   version: REPLACEME
-  replicas: 2
+  replicas: 1
   ports:
     - protocol: TCP
       containerPort: 2112
@@ -44,35 +44,11 @@ service:
       targetPort: prom
       name: prom
 ingress:
-  enabled: true
-  groupName: "mainnet-internal"
-  tlsCertArn: arn:aws:acm:us-east-2:490721144737:certificate/2c6cb5ad-8899-4871-9206-ea8e978aebae
-  scheme: "internal"
-  hosts:
-    - host: staking-expiry-checker.mainnet.babylonchain.io
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ssl-redirect
-                port:
-                  name: use-annotation
-#          - path: /
-#            pathType: Prefix
-#            backend:
-#              service:
-#                name: staking-expiry-checker
-#                port:
-#                  name: staking-expiry-checker
-externalDns:
-  fqdn: staking-expiry-checker.mainnet.babylonchain.io
-  ttl: 60
+  enabled: false
 purgeCloudflareCache:
   enabled: false
 configFiles:
-  config.yml: |    
+  config.yml: |
     poller:
       interval: 5s
       log-level: debug
@@ -80,11 +56,11 @@ configFiles:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
     btc:
-      endpoint: localhost:18332 # use port 18332 for testnet, 8332 for mainnet
+      endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
       disable-tls: false
       net-params: testnet
-      rpc-user: rpcuser
-      rpc-pass: rpcpass
+      rpc-user: RPCUSER
+      rpc-pass: RPCPASS
     queue:
       queue_user: USER
       queue_password: PASSWORD
