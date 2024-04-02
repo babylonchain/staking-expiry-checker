@@ -24,6 +24,7 @@ func NewService(db db.DbInterface, btc btcclient.BtcInterface, qm *queue.QueueMa
 }
 
 func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
+	// TODO: Use cache with ttl to store the tip height.
 	btcTip, err := s.btc.GetBlockCount()
 	if err != nil {
 		return err
@@ -35,12 +36,12 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 	}
 
 	for _, delegation := range expiredDelegations {
-		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex)
+		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, queueclient.StakingTxType(delegation.TxType))
 		if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
 			return err
 		}
 		// After successfully sending the event, delete the entry from the database.
-		if err := s.db.DeleteExpiredDelegation(ctx, delegation.StakingTxHashHex); err != nil {
+		if err := s.db.DeleteExpiredDelegation(ctx, delegation.ID); err != nil {
 			return err
 		}
 	}
