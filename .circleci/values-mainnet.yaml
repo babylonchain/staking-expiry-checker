@@ -59,11 +59,11 @@ configFiles:
       endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
       disable-tls: false
       net-params: testnet
-      rpc-user: RPCUSER
-      rpc-pass: RPCPASS
+      rpc-user: BTC_USER
+      rpc-pass: BTC_PASS
     queue:
-      queue_user: USER
-      queue_password: PASSWORD
+      user: RABBITMQ_USER
+      pass: RABBITMQ_PASSWORD
       url: "rabbitmq-headless.rabbitmq:5672"
       processing_timeout: 5 # 5 second
     metrics:
