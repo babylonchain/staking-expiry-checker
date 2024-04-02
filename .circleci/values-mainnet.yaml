@@ -58,7 +58,7 @@ configFiles:
     btc:
       endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
       disable-tls: true
-      net-params: signet
+      net-params: testnet
       rpc-user: BTC_USER
       rpc-pass: BTC_PASS
     queue:
