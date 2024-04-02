@@ -3,9 +3,8 @@ package db
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type DbInterface interface {
