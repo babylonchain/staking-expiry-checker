@@ -13,7 +13,7 @@ btc:
 queue:
   user: guest # can be replaced by values in .env file
   pass: guest
-  url: "localhost:5673"
+  url: "0.0.0.0:5673"
   processing_timeout: 5 # 5 second
 metrics:
   host: 0.0.0.0
