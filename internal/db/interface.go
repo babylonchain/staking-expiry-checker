@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type DbInterface interface {
@@ -12,6 +13,6 @@ type DbInterface interface {
 		ctx context.Context, btcTipHeight uint64,
 	) ([]model.TimeLockDocument, error)
 	DeleteExpiredDelegation(
-		ctx context.Context, stakingTxHashHex string,
+		ctx context.Context, id primitive.ObjectID,
 	) error
 }
