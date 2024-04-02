@@ -19,3 +19,5 @@ else
     # Start RabbitMQ
     docker-compose up rabbitmq -d
 fi
+
+sleep 5
