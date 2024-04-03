@@ -1,0 +1,71 @@
+namespace: staking-expiry-checker
+name: staking-expiry-checker
+deployment:
+  image: 490721144737.dkr.ecr.us-east-1.amazonaws.com/staking-expiry-checker
+  version: REPLACEME
+  replicas: 1
+  ports:
+    - protocol: TCP
+      containerPort: 2112
+      name: prom
+  env:
+    - name: CONFIG
+      value: /home/staking-expiry-checker/config.yml
+  volumes:
+    - name: staking-expiry-checker
+      configMap:
+        name: staking-expiry-checker
+  volumeMounts:
+    - name: staking-expiry-checker
+      subPath: config.yml
+      mountPath: /home/staking-expiry-checker/config.yml
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "2112"
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    configmap.reloader.stakater.com/reload: "staking-expiry-checker"
+  nodeSelector:
+    workload: "webservices"
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: staking-expiry-checker
+            topologyKey: topology.kubernetes.io/zone
+          weight: 1
+service:
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 2112
+      targetPort: prom
+      name: prom
+ingress:
+  enabled: false
+purgeCloudflareCache:
+  enabled: false
+configFiles:
+  config.yml: |
+    poller:
+      interval: 5s
+      log-level: debug
+    db:
+      address: mongodb://mongodb-headless.mongodb-staking-api:27017
+      db-name: staking-api-service
+    btc:
+      endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
+      disable-tls: true
+      net-params: testnet
+      rpc-user: BTC_USER
+      rpc-pass: BTC_PASS
+    queue:
+      user: RABBITMQ_USER
+      pass: RABBITMQ_PASSWORD
+      url: "rabbitmq-headless.rabbitmq:5672"
+      processing_timeout: 5 # 5 second
+    metrics:
+      host: 0.0.0.0
+      port: 2112

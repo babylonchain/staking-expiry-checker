@@ -5,6 +5,9 @@ services:
     container_name: staking-expiry-checker
     environment:
       - CONFIG=/home/staking-expiry-checker/config.yml
+    depends_on:
+      - mongodb
+      - rabbitmq
     volumes:
       - ./config/config-docker.yml:/home/staking-expiry-checker/config.yml:Z
   mongodb:
