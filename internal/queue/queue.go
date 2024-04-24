@@ -7,16 +7,16 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/babylonchain/staking-expiry-checker/internal/config"
-	"github.com/babylonchain/staking-expiry-checker/internal/queue/client"
+	"github.com/babylonchain/staking-queue-client/client"
+	queueConfig "github.com/babylonchain/staking-queue-client/config"
 )
 
 type QueueManager struct {
 	stakingExpiredEventQueue client.QueueClient
 }
 
-func NewQueueManager(cfg *config.QueueConfig) (*QueueManager, error) {
-	stakingEventQueue, err := client.NewQueueClient(cfg.Url, cfg.User, cfg.Pass, client.ExpiredStakingQueueName)
+func NewQueueManager(cfg *queueConfig.QueueConfig) (*QueueManager, error) {
+	stakingEventQueue, err := client.NewQueueClient(cfg, client.ExpiredStakingQueueName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize staking event queue: %w", err)
 	}
@@ -43,11 +43,11 @@ func (qm *QueueManager) SendExpiredStakingEvent(ctx context.Context, ev client.E
 	return nil
 }
 
-func (qm *QueueManager) GetExpiredQueueMessageCount() (int, error) {
-	return qm.stakingExpiredEventQueue.GetMessageCount()
-}
-
 // Shutdown gracefully stops the interaction with the queue, ensuring all resources are properly released.
 func (qm *QueueManager) Shutdown() {
-	qm.stakingExpiredEventQueue.Stop()
+	err := qm.stakingExpiredEventQueue.Stop()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to stop staking expired event queue")
+	}
+
 }

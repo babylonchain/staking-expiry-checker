@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
-	queueclient "github.com/babylonchain/staking-expiry-checker/internal/queue/client"
 	"github.com/babylonchain/staking-expiry-checker/tests/mocks"
+	"github.com/babylonchain/staking-queue-client/client"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,7 +24,7 @@ func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
 	require.Empty(t, docs)
 
 	// setup test server
-	qm, teardown := setupTestServer(t, &TestServerDependency{
+	_, conn, teardown := setupTestServer(t, &TestServerDependency{
 		MockBtcClient: mockBtc,
 	})
 	defer teardown()
@@ -35,14 +35,14 @@ func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
 			ID:               primitive.NewObjectID(),
 			StakingTxHashHex: "mockStakingTxHashHex1",
 			ExpireHeight:     999,
-			TxType:           queueclient.Active.ToString(),
+			TxType:           "active",
 		},
 
 		{
 			ID:               primitive.NewObjectID(),
 			StakingTxHashHex: "mockStakingTxHashHex2",
 			ExpireHeight:     999,
-			TxType:           queueclient.Unbonding.ToString(),
+			TxType:           "unbonding",
 		},
 	}
 	insertTestDelegations(t, expiredDelegations)
@@ -50,7 +50,7 @@ func TestProcessExpiredDelegations_NoErrors(t *testing.T) {
 	// Wait for the data
 	require.Eventually(
 		t, func() bool {
-			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
+			expiredQueueMessageCount, err := inspectQueueMessageCount(t, conn, client.ExpiredStakingQueueName)
 			return err == nil && expiredQueueMessageCount == 2
 		}, 10*time.Second, 100*time.Millisecond,
 	)
@@ -68,7 +68,7 @@ func TestProcessExpiredDelegations_ErrorGettingBlockCount(t *testing.T) {
 
 	mockBtc.On("GetBlockCount").Return(int64(0), errors.New("failed to get block count"))
 
-	qm, teardown := setupTestServer(t, &TestServerDependency{
+	_, conn, teardown := setupTestServer(t, &TestServerDependency{
 		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
 	})
@@ -77,7 +77,7 @@ func TestProcessExpiredDelegations_ErrorGettingBlockCount(t *testing.T) {
 	// Verify the process handles the error as expected
 	require.Eventually(
 		t, func() bool {
-			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
+			expiredQueueMessageCount, err := inspectQueueMessageCount(t, conn, client.ExpiredStakingQueueName)
 			return err == nil && expiredQueueMessageCount == 0
 		}, 10*time.Second, 100*time.Millisecond,
 	)
@@ -93,7 +93,7 @@ func TestProcessExpiredDelegations_ErrorFindingExpiredDelegations(t *testing.T) 
 	mockDB.On("FindExpiredDelegations", mock.Anything, uint64(expectedBtcTip)).
 		Return(nil, errors.New("database error"))
 
-	qm, teardown := setupTestServer(t, &TestServerDependency{
+	_, conn, teardown := setupTestServer(t, &TestServerDependency{
 		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
 	})
@@ -102,7 +102,7 @@ func TestProcessExpiredDelegations_ErrorFindingExpiredDelegations(t *testing.T) 
 	// Verify the process handles the error as expected
 	require.Eventually(
 		t, func() bool {
-			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
+			expiredQueueMessageCount, err := inspectQueueMessageCount(t, conn, client.ExpiredStakingQueueName)
 			return err == nil && expiredQueueMessageCount == 0
 		}, 10*time.Second, 100*time.Millisecond,
 	)
@@ -121,7 +121,7 @@ func TestProcessExpiredDelegations_ErrorDeletingExpiredDelegation(t *testing.T) 
 		ID:               testID,
 		StakingTxHashHex: "mockStakingTxHashHex",
 		ExpireHeight:     999,
-		TxType:           queueclient.Active.ToString(),
+		TxType:           "active",
 	}
 
 	mockDB.On("FindExpiredDelegations", mock.Anything, uint64(expectedBtcTip)).
@@ -129,7 +129,7 @@ func TestProcessExpiredDelegations_ErrorDeletingExpiredDelegation(t *testing.T) 
 	mockDB.On("DeleteExpiredDelegation", mock.Anything, testID).
 		Return(errors.New("delete error"))
 
-	qm, teardown := setupTestServer(t, &TestServerDependency{
+	_, conn, teardown := setupTestServer(t, &TestServerDependency{
 		MockDbClient:  mockDB,
 		MockBtcClient: mockBtc,
 	})
@@ -138,7 +138,7 @@ func TestProcessExpiredDelegations_ErrorDeletingExpiredDelegation(t *testing.T) 
 	// Verify the process handles the error as expected
 	require.Eventually(
 		t, func() bool {
-			expiredQueueMessageCount, err := qm.GetExpiredQueueMessageCount()
+			expiredQueueMessageCount, err := inspectQueueMessageCount(t, conn, client.ExpiredStakingQueueName)
 			return err == nil && expiredQueueMessageCount == 0
 		}, 10*time.Second, 100*time.Millisecond,
 	)
