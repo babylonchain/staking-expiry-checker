@@ -62,10 +62,12 @@ configFiles:
       rpc-user: BTC_USER
       rpc-pass: BTC_PASS
     queue:
-      user: RABBITMQ_USER
-      pass: RABBITMQ_PASSWORD
+      queue_user: RABBITMQ_USER
+      queue_password: RABBITMQ_PASSWORD
       url: "rabbitmq-headless.rabbitmq:5672"
       processing_timeout: 5 # 5 second
+      msg_max_retry_attempts: 10
+      requeue_delay_time: 300
     metrics:
       host: 0.0.0.0
       port: 2112

@@ -3,6 +3,7 @@ module github.com/babylonchain/staking-expiry-checker
 go 1.21.6
 
 require (
+	github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27
 	github.com/btcsuite/btcd v0.24.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
@@ -60,8 +61,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0
-	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

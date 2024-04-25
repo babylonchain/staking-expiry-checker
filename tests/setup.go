@@ -21,8 +21,10 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
 	"github.com/babylonchain/staking-expiry-checker/internal/poller"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue"
-	"github.com/babylonchain/staking-expiry-checker/internal/queue/client"
 	"github.com/babylonchain/staking-expiry-checker/internal/services"
+	"github.com/babylonchain/staking-queue-client/client"
+
+	queueconfig "github.com/babylonchain/staking-queue-client/config"
 )
 
 type TestServerDependency struct {
@@ -31,7 +33,7 @@ type TestServerDependency struct {
 	MockBtcClient   btcclient.BtcInterface
 }
 
-func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManager, func()) {
+func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManager, *amqp091.Connection, func()) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	cfg, err := config.New("./config-test.yml")
 	if err != nil {
@@ -44,7 +46,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManag
 		applyConfigOverrides(cfg, dep.ConfigOverrides)
 	}
 
-	qm, err := setUpTestQueue(t, &cfg.Queue)
+	qm, conn, err := setUpTestQueue(t, &cfg.Queue)
 	if err != nil {
 		t.Fatalf("Failed to setup test queue: %v", err)
 	}
@@ -83,11 +85,15 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManag
 	teardown := func() {
 		p.Stop()
 		qm.Shutdown()
+		err := conn.Close()
+		if err != nil {
+			log.Fatal("Failed to close connection to RabbitMQ: ", err)
+		}
 		cancel() // Cancel the context to release resources
 	}
 
 	go p.Start(ctx)
-	return qm, teardown
+	return qm, conn, teardown
 }
 
 // Generic function to apply configuration overrides
@@ -139,19 +145,20 @@ func setupTestDB(cfg *config.Config) {
 	}
 }
 
-func setUpTestQueue(t *testing.T, cfg *config.QueueConfig) (*queue.QueueManager, error) {
-	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.User, cfg.Pass, cfg.Url)
+func setUpTestQueue(t *testing.T, cfg *queueconfig.QueueConfig) (*queue.QueueManager, *amqp091.Connection, error) {
+	amqpURI := fmt.Sprintf("amqp://%s:%s@%s", cfg.QueueUser, cfg.QueuePassword, cfg.Url)
 	conn, err := amqp091.Dial(amqpURI)
 	if err != nil {
 		t.Fatalf("failed to connect to RabbitMQ in test: %v", err)
 	}
-	defer conn.Close()
 	err = purgeQueues(conn, []string{
 		client.ExpiredStakingQueueName,
+		// purge the delay queue as well
+		client.ExpiredStakingQueueName + "_delay",
 	})
 	if err != nil {
 		log.Fatal("failed to purge queues in test: ", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	qm, err := queue.NewQueueManager(cfg)
@@ -159,7 +166,7 @@ func setUpTestQueue(t *testing.T, cfg *config.QueueConfig) (*queue.QueueManager,
 		t.Fatalf("failed to setup queue manager in test: %v", err)
 	}
 
-	return qm, nil
+	return qm, conn, nil
 }
 
 // purgeQueues purges all messages from the given list of queues.
@@ -173,9 +180,9 @@ func purgeQueues(conn *amqp091.Connection, queues []string) error {
 	for _, queue := range queues {
 		_, err := ch.QueuePurge(queue, false)
 		if err != nil {
-			if strings.Contains(err.Error(), "no queue") {
+			if strings.Contains(err.Error(), "NOT_FOUND") || strings.Contains(err.Error(), "channel/connection is not open") {
 				fmt.Printf("Queue '%s' not found, ignoring...\n", queue)
-				continue // Ignore this error and proceed with the next queue
+				continue
 			}
 			return fmt.Errorf("failed to purge queue in test %s: %w", queue, err)
 		}
@@ -239,4 +246,20 @@ func fetchAllTestDelegations(t *testing.T) []model.TimeLockDocument {
 	}
 
 	return results
+}
+
+// inspectQueueMessageCount inspects the number of messages in the given queue.
+func inspectQueueMessageCount(t *testing.T, conn *amqp091.Connection, queueName string) (int, error) {
+	ch, err := conn.Channel()
+	if err != nil {
+		t.Fatalf("failed to open a channel in test: %v", err)
+	}
+	q, err := ch.QueueDeclarePassive(queueName, false, false, false, false, nil)
+	if err != nil {
+		if strings.Contains(err.Error(), "NOT_FOUND") || strings.Contains(err.Error(), "channel/connection is not open") {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("failed to inspect queue in test %s: %w", queueName, err)
+	}
+	return q.Messages, nil
 }

@@ -5,15 +5,16 @@ import (
 	"os"
 	"strings"
 
+	queue "github.com/babylonchain/staking-queue-client/config"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Poller  PollerConfig  `mapstructure:"poller"`
-	Db      DbConfig      `mapstructure:"db"`
-	Btc     BtcConfig     `mapstructure:"btc"`
-	Queue   QueueConfig   `mapstructure:"queue"`
-	Metrics MetricsConfig `mapstructure:"metrics"`
+	Poller  PollerConfig      `mapstructure:"poller"`
+	Db      DbConfig          `mapstructure:"db"`
+	Btc     BtcConfig         `mapstructure:"btc"`
+	Queue   queue.QueueConfig `mapstructure:"queue"`
+	Metrics MetricsConfig     `mapstructure:"metrics"`
 }
 
 func (cfg *Config) Validate() error {

@@ -6,7 +6,7 @@ import (
 	"github.com/babylonchain/staking-expiry-checker/internal/btcclient"
 	"github.com/babylonchain/staking-expiry-checker/internal/db"
 	"github.com/babylonchain/staking-expiry-checker/internal/queue"
-	queueclient "github.com/babylonchain/staking-expiry-checker/internal/queue/client"
+	queueclient "github.com/babylonchain/staking-queue-client/client"
 )
 
 type Service struct {
@@ -36,7 +36,7 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 	}
 
 	for _, delegation := range expiredDelegations {
-		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, queueclient.StakingTxType(delegation.TxType))
+		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, delegation.TxType)
 		if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
 			return err
 		}
