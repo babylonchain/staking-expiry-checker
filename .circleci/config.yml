@@ -144,8 +144,8 @@ jobs:
             HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
             sed -i "s/RABBITMQ_USER/$RABBITMQ_USER_STAGING/g" $HELM_VALUES
             sed -i "s/RABBITMQ_PASSWORD/$RABBITMQ_PASSWORD_STAGING/g" $HELM_VALUES
-            sed -i "s/BTC_USER/$BTC_USER_STAGING/g" $HELM_VALUES
-            sed -i "s/BTC_PASS/$BTC_PASS_STAGING/g" $HELM_VALUES
+            sed -i "s/BTC_USER/$BTC_USER/g" $HELM_VALUES
+            sed -i "s/BTC_PASS/$BTC_PASS/g" $HELM_VALUES
       - run:
           name: Perform a dry run of the new release
           command: |
