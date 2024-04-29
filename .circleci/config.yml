@@ -141,7 +141,7 @@ jobs:
       - run:
           name: Fetch and replace RabbitMQ credentials from CircleCi env vars
           command: |
-            HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
+            HELM_VALUES=/home/circleci/project/.circleci/values-staging.yaml
             sed -i "s/RABBITMQ_USER/$RABBITMQ_USER_STAGING/g" $HELM_VALUES
             sed -i "s/RABBITMQ_PASSWORD/$RABBITMQ_PASSWORD_STAGING/g" $HELM_VALUES
             sed -i "s/BTC_USER/$BTC_USER/g" $HELM_VALUES
