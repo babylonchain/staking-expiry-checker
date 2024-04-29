@@ -178,9 +178,9 @@ workflows:
           filters:
             tags:
               only: /.*/
-            branches:
-              only:
-                - main
+            # branches:
+            #   only:
+            #     - main
       - deploy_mainnet:
           requires:
             - push_docker
@@ -194,8 +194,8 @@ workflows:
           requires:
             - push_docker
             - build_lint_tests
-          filters:
-            branches:
-              only:
-                - main
-                - dev
+          # filters:
+          #   branches:
+          #     only:
+          #       - main
+          #       - dev
