@@ -125,6 +125,45 @@ jobs:
               --set deployment.version=$CIRCLE_SHA1 \
               staking-expiry-checker $HELM_CHART_REPO
 
+  deploy_staging:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - kubernetes/install-kubeconfig:
+          kubeconfig: MAINNET_KUBECONFIG
+      - helm/install-helm-client
+      - run:
+          name: Fetch and replace RabbitMQ credentials from CircleCi env vars
+          command: |
+            HELM_VALUES=/home/circleci/project/.circleci/values-staging.yaml
+            sed -i "s/RABBITMQ_USER/$RABBITMQ_USER_STAGING/g" $HELM_VALUES
+            sed -i "s/RABBITMQ_PASSWORD/$RABBITMQ_PASSWORD_STAGING/g" $HELM_VALUES
+            sed -i "s/BTC_USER/$BTC_USER/g" $HELM_VALUES
+            sed -i "s/BTC_PASS/$BTC_PASS/g" $HELM_VALUES
+      - run:
+          name: Perform a dry run of the new release
+          command: |
+            helm upgrade --install --debug --dry-run \
+              -n $DEPLOY_STAGING_NAMESPACE \
+              --values /home/circleci/project/.circleci/values-staging.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-expiry-checker $HELM_CHART_REPO
+      - run:
+          name: Release new service version in an atomic way
+          command: |
+            helm upgrade --install --debug --atomic --wait \
+              -n $DEPLOY_STAGING_NAMESPACE --create-namespace \
+              --values /home/circleci/project/.circleci/values-staging.yaml \
+              --version $HELM_CHART_VERSION \
+              --set deployment.version=$CIRCLE_SHA1 \
+              staking-expiry-checker $HELM_CHART_REPO
 workflows:
   CICD:
     jobs:
@@ -143,6 +182,15 @@ workflows:
               only:
                 - main
       - deploy_mainnet:
+          requires:
+            - push_docker
+            - build_lint_tests
+          filters:
+            branches:
+              only:
+                - main
+                - dev
+      - deploy_staging:
           requires:
             - push_docker
             - build_lint_tests
