@@ -56,9 +56,9 @@ configFiles:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
     btc:
-      endpoint: bitcoind.bitcoind-signet:38332/wallet/signet
+      endpoint: bitcoind.bitcoind-regtest:18442/wallet/regtest
       disable-tls: true
-      net-params: testnet
+      net-params: regtest 
       rpc-user: BTC_USER
       rpc-pass: BTC_PASS
     queue:
