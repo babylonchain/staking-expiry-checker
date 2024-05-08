@@ -30,20 +30,26 @@ func (s *Service) ProcessExpiredDelegations(ctx context.Context) error {
 		return err
 	}
 
-	expiredDelegations, err := s.db.FindExpiredDelegations(ctx, uint64(btcTip))
-	if err != nil {
-		return err
-	}
+	for {
+		expiredDelegations, err := s.db.FindExpiredDelegations(ctx, uint64(btcTip))
+		if err != nil {
+			return err
+		}
+		if len(expiredDelegations) == 0 {
+			break
+		}
 
-	for _, delegation := range expiredDelegations {
-		ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, delegation.TxType)
-		if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
-			return err
+		for _, delegation := range expiredDelegations {
+			ev := queueclient.NewExpiredStakingEvent(delegation.StakingTxHashHex, delegation.TxType)
+			if err := s.queueManager.SendExpiredStakingEvent(ctx, ev); err != nil {
+				return err
+			}
+			// After successfully sending the event, delete the entry from the database.
+			if err := s.db.DeleteExpiredDelegation(ctx, delegation.ID); err != nil {
+				return err
+			}
 		}
-		// After successfully sending the event, delete the entry from the database.
-		if err := s.db.DeleteExpiredDelegation(ctx, delegation.ID); err != nil {
-			return err
-		}
+
 	}
 
 	return nil

@@ -50,7 +50,7 @@ purgeCloudflareCache:
 configFiles:
   config.yml: |
     poller:
-      interval: 5s
+      interval: 60s
       log-level: debug
     db:
       address: mongodb://mongodb-staging-headless.mongodb-staking-api:27017
