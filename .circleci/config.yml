@@ -96,7 +96,7 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           region: "$AWS_REGION"
       - kubernetes/install-kubeconfig:
-          kubeconfig: MAINNET_KUBECONFIG
+          kubeconfig: TESTNET_KUBECONFIG
       - helm/install-helm-client
       - run:
           name: Fetch and replace RabbitMQ credentials from CircleCi env vars
@@ -125,7 +125,7 @@ jobs:
               --set deployment.version=$CIRCLE_SHA1 \
               staking-expiry-checker $HELM_CHART_REPO
 
-  deploy_mainnet:
+  deploy_testnet:
     machine:
       image: ubuntu-2204:2024.01.1
       resource_class: large
@@ -136,12 +136,12 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           region: "$AWS_REGION"
       - kubernetes/install-kubeconfig:
-          kubeconfig: MAINNET_KUBECONFIG
+          kubeconfig: TESTNET_KUBECONFIG
       - helm/install-helm-client
       - run:
           name: Fetch and replace RabbitMQ credentials from CircleCi env vars
           command: |
-            HELM_VALUES=/home/circleci/project/.circleci/values-mainnet.yaml
+            HELM_VALUES=/home/circleci/project/.circleci/values-testnet.yaml
             sed -i "s/RABBITMQ_USER/$RABBITMQ_USER/g" $HELM_VALUES
             sed -i "s/RABBITMQ_PASSWORD/$RABBITMQ_PASSWORD/g" $HELM_VALUES
             sed -i "s/BTC_USER/$BTC_USER/g" $HELM_VALUES
@@ -150,8 +150,8 @@ jobs:
           name: Perform a dry run of the new release
           command: |
             helm upgrade --install --debug --dry-run \
-              -n $DEPLOY_MAINNET_NAMESPACE \
-              --values /home/circleci/project/.circleci/values-mainnet.yaml \
+              -n $DEPLOY_TESTNET_NAMESPACE \
+              --values /home/circleci/project/.circleci/values-testnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
               staking-expiry-checker $HELM_CHART_REPO
@@ -159,13 +159,13 @@ jobs:
           name: Release new service version in an atomic way
           command: |
             helm upgrade --install --debug --atomic --wait \
-              -n $DEPLOY_MAINNET_NAMESPACE --create-namespace \
-              --values /home/circleci/project/.circleci/values-mainnet.yaml \
+              -n $DEPLOY_TESTNET_NAMESPACE --create-namespace \
+              --values /home/circleci/project/.circleci/values-testnet.yaml \
               --version $HELM_CHART_VERSION \
               --set deployment.version=$CIRCLE_SHA1 \
               staking-expiry-checker $HELM_CHART_REPO
 
-  rollback_mainnet:
+  rollback_testnet:
     machine:
       image: ubuntu-2204:2024.01.1
       resource_class: large
@@ -176,13 +176,13 @@ jobs:
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           region: "$AWS_REGION"
       - kubernetes/install-kubeconfig:
-          kubeconfig: MAINNET_KUBECONFIG
+          kubeconfig: TESTNET_KUBECONFIG
       - helm/install-helm-client
       - run:
           name: Rollback Helm Chart to previous release
           command: |
             helm rollback --cleanup-on-fail --force --recreate-pods --wait \
-              --debug -n $DEPLOY_MAINNET_NAMESPACE staking-expiry-checker
+              --debug -n $DEPLOY_TESTNET_NAMESPACE staking-expiry-checker
 
 workflows:
   CICD:
@@ -201,6 +201,7 @@ workflows:
             branches:
               only:
                 - main
+                - dev
       - deploy_staging:
           requires:
             - push_docker
@@ -219,7 +220,7 @@ workflows:
               only:
                 - main
                 - dev
-      - deploy_mainnet:
+      - deploy_testnet:
           requires:
             - require_approval_deploy
           filters:
@@ -230,12 +231,12 @@ workflows:
       - require_approval_rollback:
           type: approval
           requires:
-            - deploy_mainnet
+            - deploy_testnet
           filters:
             branches:
               only:
                 - main
                 - dev
-      - rollback_mainnet:
+      - rollback_testnet:
           requires:
             - require_approval_rollback
