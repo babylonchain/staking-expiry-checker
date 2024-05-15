@@ -1,6 +1,6 @@
 github.com/aead/siphash v1.0.1/go.mod h1:Nywa3cDsYNNK3gaciGTWPwHt0wlpNV15vwmswBAUSII=
-github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27 h1:qVf88e5VrG4Rq1AZm188h3alXwB4d0YYs0eyHo+9BWw=
-github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
+github.com/babylonchain/staking-queue-client v0.2.0 h1:kktKgXJXDAheBv82s7LV5L2CPAfzhtHllNrIopXGjIo=
+github.com/babylonchain/staking-queue-client v0.2.0/go.mod h1:mEgA6N3SnwFwGEOsUYr/HdjpKa13Wck08MS7VY/Icvo=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13Px/pDuV7OomQ=

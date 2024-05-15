@@ -3,7 +3,7 @@ module github.com/babylonchain/staking-expiry-checker
 go 1.21.6
 
 require (
-	github.com/babylonchain/staking-queue-client v0.0.0-20240424061128-3ac950ef5f27
+	github.com/babylonchain/staking-queue-client v0.2.0
 	github.com/btcsuite/btcd v0.24.0
 	github.com/rabbitmq/amqp091-go v1.9.0
 	github.com/spf13/viper v1.18.2
