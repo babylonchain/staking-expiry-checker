@@ -27,15 +27,6 @@ deployment:
     configmap.reloader.stakater.com/reload: "staking-expiry-checker"
   nodeSelector:
     workload: "webservices"
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                app: staking-expiry-checker
-            topologyKey: topology.kubernetes.io/zone
-          weight: 1
 service:
   type: NodePort
   ports:
@@ -56,9 +47,9 @@ configFiles:
       address: mongodb://mongodb-headless.mongodb-staking-api:27017
       db-name: staking-api-service
     btc:
-      endpoint: bitcoind.bitcoind-regtest:18442/wallet/regtest
+      endpoint: bitcoind.bitcoind-signet:38332
       disable-tls: true
-      net-params: regtest 
+      net-params: testnet
       rpc-user: BTC_USER
       rpc-pass: BTC_PASS
     queue:
