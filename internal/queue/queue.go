@@ -7,6 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/babylonchain/staking-expiry-checker/internal/observability/metrics"
 	"github.com/babylonchain/staking-queue-client/client"
 	queueConfig "github.com/babylonchain/staking-queue-client/config"
 )
@@ -36,7 +37,8 @@ func (qm *QueueManager) SendExpiredStakingEvent(ctx context.Context, ev client.E
 	log.Debug().Str("tx_hash", ev.StakingTxHashHex).Msg("publishing expired staking event")
 	err = qm.stakingExpiredEventQueue.SendMessage(ctx, messageBody)
 	if err != nil {
-		return fmt.Errorf("failed to publish staking event: %w", err)
+		metrics.RecordQueueSendError()
+		log.Fatal().Err(err).Str("tx_hash", ev.StakingTxHashHex).Msg("failed to publish staking event")
 	}
 	log.Debug().Str("tx_hash", ev.StakingTxHashHex).Msg("successfully published expired staking event")
 
