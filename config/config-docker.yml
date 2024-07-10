@@ -2,6 +2,8 @@ poller:
   interval: 5s
   log-level: debug
 db:
+  username: root
+  password: example
   address: "mongodb://localhost:27017"
   db-name: staking-api-service
 btc:
