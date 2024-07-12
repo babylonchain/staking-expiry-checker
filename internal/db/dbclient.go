@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/babylonchain/staking-expiry-checker/internal/config"
 	"github.com/babylonchain/staking-expiry-checker/internal/db/model"
 )
 
@@ -17,15 +18,19 @@ type Database struct {
 	client *mongo.Client
 }
 
-func New(ctx context.Context, dbName string, dbURI string) (*Database, error) {
-	clientOps := options.Client().ApplyURI(dbURI)
+func New(ctx context.Context, cfg config.DbConfig) (*Database, error) {
+	credential := options.Credential{
+		Username: cfg.Username,
+		Password: cfg.Password,
+	}
+	clientOps := options.Client().ApplyURI(cfg.Address).SetAuth(credential)
 	client, err := mongo.Connect(ctx, clientOps)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Database{
-		dbName: dbName,
+		dbName: cfg.DbName,
 		client: client,
 	}, nil
 }

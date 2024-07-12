@@ -69,7 +69,7 @@ func setupTestServer(t *testing.T, dep *TestServerDependency) (*queue.QueueManag
 		dbClient = dep.MockDbClient
 	} else {
 		setupTestDB(cfg)
-		dbClient, err = db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
+		dbClient, err = db.New(ctx, cfg.Db)
 		if err != nil {
 			t.Fatalf("Failed to initialize db client: %v", err)
 		}

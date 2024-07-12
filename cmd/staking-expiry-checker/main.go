@@ -43,7 +43,7 @@ func main() {
 	metrics.Init(metricsPort)
 
 	// create new db client
-	dbClient, err := db.New(ctx, cfg.Db.DbName, cfg.Db.Address)
+	dbClient, err := db.New(ctx, cfg.Db)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error while creating db client")
 	}
