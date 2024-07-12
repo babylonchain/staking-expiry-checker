@@ -46,6 +46,6 @@ generate-mock-interface:
 	cd internal/db && mockery --name=DbInterface --output=../../tests/mocks --outpkg=mocks --filename=mock_db_client.go
 	cd internal/btcclient && mockery --name=BtcInterface --output=../../tests/mocks --outpkg=mocks --filename=mock_btc_client.go
 
-tests:
+test:
 	./bin/local-startup.sh;
 	go test -v -cover ./...
