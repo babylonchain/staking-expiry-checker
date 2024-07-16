@@ -19,4 +19,3 @@ jobs:
     with:
       publish: false
       dockerfile: ./contrib/images/staking-expiry-checker/Dockerfile
-      dockerfile: ./contrib/images/staking-expiry-checker/Dockerfile
