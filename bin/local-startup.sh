@@ -18,4 +18,6 @@ else
     echo "Starting RabbitMQ"
     # Start RabbitMQ
     docker-compose up -d rabbitmq
+    # Wait for RabbitMQ to start
+    sleep 10
 fi

@@ -21,3 +21,4 @@ jobs:
     secrets: inherit
     with:
      publish: true
+     dockerfile: ./contrib/images/staking-expiry-checker/Dockerfile
