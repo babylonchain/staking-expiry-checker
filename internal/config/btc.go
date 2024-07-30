@@ -14,7 +14,7 @@ type BtcConfig struct {
 		When true, connections use HTTP. When false, HTTPS is used for secure communication.
 	*/
 	DisableTLS bool `mapstructure:"disable-tls"`
-	// NetParams defines the network parameters (e.g., mainnet, testnet).
+	// NetParams defines the network parameters (e.g., mainnet, testnet & signet).
 	NetParams string `mapstructure:"net-params"`
 	// RpcUser is the username for RPC server authentication.
 	RpcUser string `mapstructure:"rpc-user"`
